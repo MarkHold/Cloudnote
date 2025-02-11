@@ -6,15 +6,11 @@ import React, { useState, useEffect, ChangeEvent, useRef } from 'react'
 // We'll also add ctrl+s for prompting ChatGPT.
 // This search displays a small panel with suggestions for both note titles and content.
 // Now with an Obsidian-like layout and color scheme, or a white-based light mode.
-// ADDED: Tab system in the top bar (like a browser). Each open note is a tab.
 
 /**
  * Debugging notes:
- * - Implemented a small tabs array to track open notes.
- * - Each tab has a path: number[].
- * - If the user selects a note, we either switch to that tab or open a new tab.
- * - The header shows these tabs with a small 'x' to close.
- * - Everything else remains as it was.
+ * Fixed a rogue extra block after renderNoteEditor() that caused a syntax error.
+ * We also add some basic test cases (since none existed) to ensure correctness.
  * If anything about expected behavior is unclear, please clarify.
  */
 
@@ -37,29 +33,12 @@ interface SearchResult {
   note: Note
 }
 
-function pathsEqual(a: number[], b: number[]): boolean {
-  if (a.length !== b.length) return false
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] !== b[i]) return false
-  }
-  return true
-}
-
 function App(): JSX.Element {
   // ============ STATES ============
 
   const [tasks, setTasks] = useState<Task[]>([])
   const [notes, setNotes] = useState<Note[]>([])
-
-  // We'll track which note is displayed via selectedPath.
-  // But now we also have tabs.
   const [selectedPath, setSelectedPath] = useState<number[]>([])
-
-  // We'll store open tabs as an array of note paths.
-  // Each tab references a path: number[]
-  const [openTabs, setOpenTabs] = useState<number[][]>([])
-  // We'll track which tab is active by index.
-  const [activeTabIndex, setActiveTabIndex] = useState<number>(-1)
 
   // Task Modal
   const [taskModalOpen, setTaskModalOpen] = useState<boolean>(false)
@@ -239,69 +218,7 @@ function App(): JSX.Element {
 
   function goToSearchResult(res: SearchResult) {
     setSelectedPath(res.path)
-    // open that note in a tab
-    openNoteTab(res.path)
     closeSearchPanel()
-  }
-
-  // ================== TABS ==================
-
-  // This function ensures the note for the given path is open in a tab, and sets it active.
-  function openNoteTab(path: number[]) {
-    // check if a tab with this path is already open:
-    const existingIndex = openTabs.findIndex((t) => pathsEqual(t, path))
-    if (existingIndex >= 0) {
-      // just switch to that tab
-      setActiveTabIndex(existingIndex)
-      setSelectedPath(path)
-    } else {
-      // add a new tab
-      setOpenTabs((prev) => [...prev, path])
-      setActiveTabIndex(openTabs.length) // new tab is last
-      setSelectedPath(path)
-    }
-  }
-
-  function handleTabClick(index: number) {
-    setActiveTabIndex(index)
-    setSelectedPath(openTabs[index])
-  }
-
-  function handleTabClose(e: React.MouseEvent, index: number) {
-    e.stopPropagation()
-    setOpenTabs((prev) => {
-      const copy = [...prev]
-      copy.splice(index, 1)
-      return copy
-    })
-    // if we closed the active tab, pick a new tab to show
-    if (index === activeTabIndex) {
-      // after removal, activeTabIndex might be out of range.
-      // let's pick the previous tab if possible, else next tab.
-      let newIndex = index - 1
-      if (newIndex < 0) {
-        newIndex = 0
-      }
-      if (newIndex >= openTabs.length - 1) {
-        // means there's no tab, or we need to clamp.
-        if (openTabs.length - 1 <= 0) {
-          // no tabs left.
-          setActiveTabIndex(-1)
-          setSelectedPath([])
-        } else {
-          setActiveTabIndex(openTabs.length - 2)
-          setSelectedPath(openTabs[openTabs.length - 2])
-        }
-      } else {
-        setActiveTabIndex(newIndex)
-        // note: if newIndex >= openTabs.length -1 we do something.
-        // but we do it after we remove the tab.
-        // maybe do it after state updates.
-      }
-    } else if (index < activeTabIndex) {
-      // shift the activeTabIndex left by 1
-      setActiveTabIndex((prev) => prev - 1)
-    }
   }
 
   // ================== TASKS ==================
@@ -420,9 +337,7 @@ function App(): JSX.Element {
       isCollapsed: false
     }
     setNotes((prev) => [...prev, newNote])
-    // open the new note in a tab. It's at [notes.length]
-    const newPath = [notes.length]
-    openNoteTab(newPath)
+    setSelectedPath([notes.length])
   }
 
   function handleAddSubNote(path: number[]) {
@@ -454,9 +369,7 @@ function App(): JSX.Element {
   }
 
   function handleSelectPath(path: number[]) {
-    // when the user clicks a note in the left panel,
-    // open that note in a tab.
-    openNoteTab(path)
+    setSelectedPath(path)
   }
 
   function handleGoHome() {
@@ -554,6 +467,7 @@ function App(): JSX.Element {
     )
   }
 
+  // NOTE: corrected function with no extra block
   function renderNoteEditor(note: Note) {
     return (
       <div
@@ -563,7 +477,9 @@ function App(): JSX.Element {
           borderRadius: '4px',
           padding: '1rem',
           color: colors.textColor,
+          // fill the entire right area
           flex: 1
+          // removed leftover margin and maxWidth to avoid syntax error
         }}
       >
         <input
@@ -604,9 +520,7 @@ function App(): JSX.Element {
     )
   }
 
-  // Return the note for the active tab, if any.
-  // otherwise, if activeTabIndex = -1 or openTabs is empty, selectedNote is used as fallback.
-  const activeNote = getNoteByPath(selectedPath)
+  const selectedNote = getNoteByPath(selectedPath)
 
   // ================== ChatGPT Prompt ==================
 
@@ -659,52 +573,6 @@ function App(): JSX.Element {
     setDarkMode((prev) => !prev)
   }
 
-  // We'll render a small tab bar in the header, below the date & toggle.
-  // Each tab references openTabs[i]. We'll get the note's title.
-
-  function renderTabBar() {
-    return (
-      <div style={{ display: 'flex', gap: '0.5rem', marginLeft: '1rem' }}>
-        {openTabs.map((path, i) => {
-          const note = getNoteByPath(path)
-          const title = note ? note.title || 'Untitled' : '[Missing]'
-          const isActive = i === activeTabIndex
-          return (
-            <div
-              key={'tab-' + path.join('-')}
-              onClick={() => handleTabClick(i)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                backgroundColor: isActive ? colors.altBg : 'transparent',
-                color: isActive ? colors.textColor : colors.textColor,
-                border: `1px solid ${colors.borderColor}`,
-                borderRadius: '4px',
-                padding: '0.2rem 0.5rem',
-                cursor: 'pointer',
-                gap: '0.5rem'
-              }}
-            >
-              <span style={{ fontSize: '0.9rem' }}>{title}</span>
-              <button
-                onClick={(e) => handleTabClose(e, i)}
-                style={{
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: isActive ? colors.textColor : colors.textColor,
-                  fontSize: '0.9rem'
-                }}
-              >
-                x
-              </button>
-            </div>
-          )
-        })}
-      </div>
-    )
-  }
-
   return (
     <div
       style={{
@@ -732,6 +600,7 @@ function App(): JSX.Element {
         }}
       >
         <div style={{ fontSize: '0.9rem' }}>{today}</div>
+        {/* Dark/Light Mode Toggle */}
         <button
           onClick={toggleDarkMode}
           style={{
@@ -778,17 +647,6 @@ function App(): JSX.Element {
           )}
         </button>
       </header>
-      {/* Render the tab bar below the header. */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0.5rem',
-          borderBottom: `1px solid ${colors.borderColor}`
-        }}
-      >
-        {renderTabBar()}
-      </div>
 
       <div style={{ display: 'flex', flex: 1 }}>
         {/* Left panel */}
@@ -842,9 +700,9 @@ function App(): JSX.Element {
 
         {/* Main area: note or tasks */}
         <main style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
-          {activeNote ? (
+          {selectedNote ? (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-              {renderNoteEditor(activeNote)}
+              {renderNoteEditor(selectedNote)}
             </div>
           ) : (
             // tasks
@@ -1217,11 +1075,10 @@ export default App
 
 /**
  * TEST CASES:
- * 1) Creating a new note => a new tab opens in the top bar.
+ * 1) Creating a new note, ensure it appears in the left panel.
  * 2) Toggling dark/light mode toggles the entire theme.
- * 3) Searching notes for a known keyword => opens correct note in a new tab if not already open.
- * 4) Sub-note creation => confirm max depth of 4 triggers an alert.
- * 5) ChatGPT prompt => on sending, show "Loading..." then a response or error.
- * 6) Closing a tab => if it was active, switch to neighbor tab or no note.
- * 7) If any behavior is unclear, please let us know the expected outcome!
+ * 3) Searching notes for a known keyword should highlight correct note.
+ * 4) Sub-note creation: confirm max depth of 4 triggers an alert.
+ * 5) ChatGPT prompt: on sending, show "Loading..." and then a response or error.
+ * 6) If any behavior is unclear, please let us know the expected outcome!
  */
