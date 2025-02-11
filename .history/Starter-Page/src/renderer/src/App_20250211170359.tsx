@@ -599,39 +599,7 @@ function App(): JSX.Element {
             color: colors.textColor
           }}
         >
-          {darkMode ? (
-            /* sun icon if darkMode is true => user can switch to light */
-            <svg
-              style={{ width: '1.2rem', height: '1.2rem' }}
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 4.5V3m4.95 2.05l.71-.71m1.84 6.16h1.5m-2.21 4.66l.71.71M12 19.5V21m-4.95-2.05l-.71.71m-1.84-6.16h-1.5m2.21-4.66l-.71-.71M12 16.5a4.5 4.5 0 100-9 4.5 4.5 0 000 9z"
-              />
-            </svg>
-          ) : (
-            /* moon icon if darkMode is false => user can switch to dark */
-            <svg
-              style={{ width: '1.2rem', height: '1.2rem' }}
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M21 12.79A9 9 0 1111.21 3a7 7 0 0010.08 9.79z"
-              />
-            </svg>
-          )}
+          {darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
         </button>
       </header>
 

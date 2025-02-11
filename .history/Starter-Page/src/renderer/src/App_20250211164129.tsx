@@ -1,11 +1,11 @@
-import React, { useState, useEffect, ChangeEvent, useRef } from 'react'
+import { useState, useEffect, ChangeEvent, useRef } from 'react'
 
 // We'll store tasks as objects so we can have title, description, due date.
 // We'll add an Electron-friendly shortcut for ctrl+t to open a modal.
 // We'll also add ctrl+f for searching notes.
 // We'll also add ctrl+s for prompting ChatGPT.
-// This search displays a small panel with suggestions for both note titles and content.
-// Now with an Obsidian-like layout and color scheme, or a white-based light mode.
+// This search will display a small panel with suggestions for both note titles and content.
+// Now styled similarly to Obsidian: a dark theme, left panel for notes, center area for editing.
 
 interface Task {
   id: string
@@ -27,8 +27,6 @@ interface SearchResult {
 }
 
 function App(): JSX.Element {
-  // ============ STATES ============
-
   const [tasks, setTasks] = useState<Task[]>([])
   const [notes, setNotes] = useState<Note[]>([])
   const [selectedPath, setSelectedPath] = useState<number[]>([])
@@ -53,7 +51,6 @@ function App(): JSX.Element {
   const [chatGptResponse, setChatGptResponse] = useState('')
   const [chatGptPromptHistory, setChatGptPromptHistory] = useState<string>('')
 
-  // Hard-coded API key (use caution in production)
   const openAiApiKey =
     'sk-3LUjXGvek8ASoLwWxu3NHA8YSAC-r0-tXivqtGAOrOT3BlbkFJsb5hPc16m_mPqt5sxc1fbx4Qjc2ezV3EXiFDTEUaIA'
 
@@ -65,24 +62,7 @@ function App(): JSX.Element {
     day: 'numeric'
   })
 
-  // Dark mode or light mode state
-  const [darkMode, setDarkMode] = useState(true)
-
-  // We'll define a helper for the colors depending on mode
-  const colors = {
-    // base backgrounds
-    mainBg: darkMode ? '#1e1e1e' : '#fefefe',
-    panelBg: darkMode ? '#2b2b2b' : '#f7f7f7',
-    borderColor: darkMode ? '#333' : '#ccc',
-    textColor: darkMode ? '#ccc' : '#333',
-    // for sub panel or alt backgrounds
-    altBg: darkMode ? '#333' : '#eaeaea',
-    accent: darkMode ? '#483699' : '#497ef0', // or pick a different accent for light
-    buttonBg: darkMode ? '#444' : '#ccc',
-    buttonText: darkMode ? '#ccc' : '#333'
-  }
-
-  // ======= LOCALSTORAGE LOADING/SAVING =======
+  // Load from localStorage
   useEffect(() => {
     try {
       const savedTasks = localStorage.getItem('myapp_tasks_obj')
@@ -106,7 +86,7 @@ function App(): JSX.Element {
     localStorage.setItem('myapp_notes', JSON.stringify(notes))
   }, [notes])
 
-  // ======= KEYBOARD SHORTCUTS =======
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key.toLowerCase() === 't') {
@@ -383,12 +363,7 @@ function App(): JSX.Element {
     return (
       <div
         key={path.join('-')}
-        style={{
-          marginTop: '0.3rem',
-          padding: '0.2rem',
-          fontSize: '0.9rem',
-          color: colors.textColor
-        }}
+        style={{ marginTop: '0.3rem', padding: '0.2rem', color: '#d0d0d0' }}
       >
         <div style={{ display: 'flex', alignItems: 'center' }}>
           {hasSubNotes && (
@@ -402,8 +377,8 @@ function App(): JSX.Element {
                 backgroundColor: 'transparent',
                 border: 'none',
                 cursor: 'pointer',
-                fontSize: '0.8rem',
-                color: darkMode ? '#aaa' : '#777'
+                fontSize: '0.9rem',
+                color: '#aaa'
               }}
             >
               {note.isCollapsed ? '▶' : '▼'}
@@ -413,11 +388,11 @@ function App(): JSX.Element {
             onClick={() => handleSelectPath(path)}
             style={{
               flex: 1,
-              backgroundColor: darkMode ? '#333' : '#eee',
+              backgroundColor: '#2b2b2b',
               borderRadius: '4px',
               cursor: 'pointer',
-              padding: '0.3rem',
-              color: colors.textColor
+              padding: '0.4rem',
+              color: '#d0d0d0'
             }}
           >
             {note.title || 'Untitled'}
@@ -430,13 +405,12 @@ function App(): JSX.Element {
               }}
               style={{
                 marginLeft: '0.5rem',
-                backgroundColor: colors.accent,
+                backgroundColor: '#483699',
                 border: 'none',
                 borderRadius: '4px',
                 color: '#fff',
                 cursor: 'pointer',
-                padding: '0.2rem 0.5rem',
-                fontSize: '0.8rem'
+                padding: '0.2rem 0.5rem'
               }}
             >
               +
@@ -457,17 +431,7 @@ function App(): JSX.Element {
 
   function renderNoteEditor(note: Note) {
     return (
-      <div
-        style={{
-          backgroundColor: darkMode ? '#2b2b2b' : '#f7f7f7',
-          border: `1px solid ${colors.borderColor}`,
-          borderRadius: '4px',
-          padding: '1rem',
-          color: colors.textColor,
-          margin: '1rem',
-          maxWidth: '800px'
-        }}
-      >
+      <div style={{ color: '#ccc' }}>
         <input
           type="text"
           value={note.title}
@@ -480,25 +444,24 @@ function App(): JSX.Element {
             padding: '0.5rem',
             fontSize: '1.1rem',
             borderRadius: '4px',
-            border: `1px solid ${colors.borderColor}`,
-            backgroundColor: colors.altBg,
-            color: colors.textColor
+            border: '1px solid #555',
+            backgroundColor: '#2b2b2b',
+            color: '#ccc'
           }}
         />
-        {/* Normal textarea for note content, no markdown library */}
         <textarea
           value={note.content}
           onChange={handleNoteContentChange}
           placeholder="Write your note here..."
           style={{
             width: '100%',
-            height: '300px',
+            height: '400px',
             padding: '0.5rem',
             fontSize: '1rem',
             borderRadius: '4px',
-            border: `1px solid ${colors.borderColor}`,
-            backgroundColor: colors.altBg,
-            color: colors.textColor,
+            border: '1px solid #555',
+            backgroundColor: '#2b2b2b',
+            color: '#ccc',
             resize: 'vertical'
           }}
         />
@@ -555,16 +518,11 @@ function App(): JSX.Element {
     }
   }
 
-  // Toggle the dark mode
-  function toggleDarkMode() {
-    setDarkMode((prev) => !prev)
-  }
-
   return (
     <div
       style={{
         position: 'relative',
-        backgroundColor: colors.mainBg,
+        backgroundColor: '#1e1e1e', // Obsidian-like dark background
         minHeight: '100vh',
         minWidth: '100vw',
         margin: 0,
@@ -572,87 +530,44 @@ function App(): JSX.Element {
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        color: colors.textColor
+        color: '#ccc' // main text color
       }}
     >
+      {/* Remove video for an Obsidian-like vibe */}
+      {/* Header: Dark top bar, akin to Obsidian's title bar */}
       <header
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           padding: '0.5rem 1rem',
-          backgroundColor: darkMode ? '#2b2b2b' : '#f0f0f0',
-          color: colors.textColor,
+          backgroundColor: '#2b2b2b',
+          color: '#ccc',
           boxShadow: '0 2px 4px rgba(0, 0, 0, 0.5)'
         }}
       >
         <div style={{ fontSize: '0.9rem' }}>{today}</div>
-        {/* Dark/Light Mode Toggle */}
-        <button
-          onClick={toggleDarkMode}
-          style={{
-            backgroundColor: 'transparent',
-            border: `1px solid ${colors.borderColor}`,
-            borderRadius: '4px',
-            padding: '0.3rem 0.6rem',
-            cursor: 'pointer',
-            color: colors.textColor
-          }}
-        >
-          {darkMode ? (
-            /* sun icon if darkMode is true => user can switch to light */
-            <svg
-              style={{ width: '1.2rem', height: '1.2rem' }}
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 4.5V3m4.95 2.05l.71-.71m1.84 6.16h1.5m-2.21 4.66l.71.71M12 19.5V21m-4.95-2.05l-.71.71m-1.84-6.16h-1.5m2.21-4.66l-.71-.71M12 16.5a4.5 4.5 0 100-9 4.5 4.5 0 000 9z"
-              />
-            </svg>
-          ) : (
-            /* moon icon if darkMode is false => user can switch to dark */
-            <svg
-              style={{ width: '1.2rem', height: '1.2rem' }}
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M21 12.79A9 9 0 1111.21 3a7 7 0 0010.08 9.79z"
-              />
-            </svg>
-          )}
-        </button>
+        <div style={{ fontSize: '0.9rem', color: '#999' }}>Cloudnote</div>
       </header>
 
       <div style={{ display: 'flex', flex: 1 }}>
-        {/* Left panel */}
+        {/* Left panel: narrower than before, like Obsidian's file explorer */}
         <aside
           style={{
             width: '250px',
-            backgroundColor: darkMode ? '#2b2b2b' : '#f7f7f7',
-            borderRight: `1px solid ${colors.borderColor}`,
+            backgroundColor: '#2b2b2b',
+            borderRight: '1px solid #333',
             display: 'flex',
             flexDirection: 'column'
           }}
         >
-          {/* A small top area for new note button */}
-          <div style={{ padding: '0.5rem', borderBottom: `1px solid ${colors.borderColor}` }}>
+          {/* A small top area for new note / tasks button, etc. */}
+          <div style={{ padding: '0.5rem', borderBottom: '1px solid #333' }}>
             <button
               onClick={handleNewNote}
               style={{
                 width: '100%',
-                backgroundColor: colors.accent,
+                backgroundColor: '#483699',
                 color: '#fff',
                 border: 'none',
                 borderRadius: '4px',
@@ -664,16 +579,17 @@ function App(): JSX.Element {
               + New Note
             </button>
           </div>
-          {/* List of notes */}
+          {/* List of notes (like Obsidian's file explorer) */}
           <div style={{ padding: '0.5rem', overflowY: 'auto', flex: 1 }}>
             {notes.map((note, index) => renderNoteItem(note, [index]))}
           </div>
+          {/* A small button for tasks screen? Could also keep it inside notes. */}
           <button
             onClick={handleGoHome}
             style={{
               margin: '0.5rem',
-              backgroundColor: darkMode ? '#444' : '#ddd',
-              color: colors.textColor,
+              backgroundColor: '#444',
+              color: '#ccc',
               border: 'none',
               borderRadius: '4px',
               padding: '0.4rem',
@@ -685,35 +601,33 @@ function App(): JSX.Element {
           </button>
         </aside>
 
-        {/* Main area: note or tasks */}
-        <main style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+        {/* Main area: note editing or tasks */}
+        <main style={{ flex: 1, padding: '1rem', position: 'relative' }}>
           {selectedNote ? (
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
               {renderNoteEditor(selectedNote)}
             </div>
           ) : (
-            // tasks
             <div
               style={{
                 width: '400px',
-                backgroundColor: darkMode ? '#2b2b2b' : '#f7f7f7',
-                border: `1px solid ${colors.borderColor}`,
+                backgroundColor: '#2b2b2b',
+                border: '1px solid #333',
                 borderRadius: '4px',
                 padding: '1rem',
-                color: colors.textColor,
-                margin: '1rem'
+                color: '#ccc'
               }}
             >
-              <h2 style={{ marginBottom: '1rem', color: colors.textColor }}>Tasks</h2>
+              <h2 style={{ marginBottom: '1rem', color: '#ccc' }}>Tasks</h2>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <tbody>
                   {tasks.map((task, index) => (
-                    <tr key={task.id} style={{ borderBottom: `1px solid ${colors.borderColor}` }}>
+                    <tr key={task.id} style={{ borderBottom: '1px solid #444' }}>
                       <td
                         style={{ padding: '0.5rem', cursor: 'pointer' }}
                         onClick={() => handleTaskClick(task)}
                       >
-                        <span style={{ color: darkMode ? '#fff' : '#000' }}>{task.title}</span>
+                        <span style={{ color: '#fff' }}>{task.title}</span>
                       </td>
                       <td style={{ padding: '0.5rem', textAlign: 'right' }}>
                         <input type="checkbox" onChange={() => handleCheck(index)} />
@@ -727,7 +641,7 @@ function App(): JSX.Element {
                 onClick={openNewTaskModal}
                 style={{
                   marginTop: '1rem',
-                  backgroundColor: colors.accent,
+                  backgroundColor: '#483699',
                   color: '#fff',
                   border: 'none',
                   borderRadius: '4px',
@@ -740,6 +654,7 @@ function App(): JSX.Element {
             </div>
           )}
 
+          {/* ChatGPT side panel if there's a response */}
           {chatGptResponse && (
             <div
               style={{
@@ -748,18 +663,18 @@ function App(): JSX.Element {
                 right: 0,
                 height: '100%',
                 width: '300px',
-                backgroundColor: darkMode ? '#2b2b2b' : '#f7f7f7',
-                borderLeft: `1px solid ${colors.borderColor}`,
+                backgroundColor: '#2b2b2b',
+                borderLeft: '1px solid #333',
                 boxShadow: '-2px 0 6px rgba(0,0,0,0.2)',
                 padding: '1rem',
                 overflowY: 'auto',
-                color: colors.textColor
+                color: '#ccc'
               }}
             >
               <h3 style={{ marginBottom: '0.5rem' }}>ChatGPT Prompt:</h3>
               <div
                 style={{
-                  backgroundColor: darkMode ? '#333' : '#eee',
+                  backgroundColor: '#333',
                   borderRadius: '4px',
                   padding: '0.5rem',
                   marginBottom: '1rem',
@@ -771,7 +686,7 @@ function App(): JSX.Element {
               <h3 style={{ marginBottom: '0.5rem' }}>ChatGPT Response:</h3>
               <div
                 style={{
-                  backgroundColor: darkMode ? '#333' : '#eee',
+                  backgroundColor: '#333',
                   borderRadius: '4px',
                   padding: '0.5rem',
                   whiteSpace: 'pre-wrap'
@@ -802,7 +717,7 @@ function App(): JSX.Element {
         >
           <div
             style={{
-              backgroundColor: darkMode ? '#2b2b2b' : '#f7f7f7',
+              backgroundColor: '#2b2b2b',
               borderRadius: '8px',
               padding: '1rem',
               minWidth: '400px',
@@ -810,10 +725,10 @@ function App(): JSX.Element {
               display: 'flex',
               flexDirection: 'column',
               gap: '1rem',
-              color: colors.textColor
+              color: '#ccc'
             }}
           >
-            <h2 style={{ marginBottom: '0.5rem', color: darkMode ? '#fff' : '#000' }}>
+            <h2 style={{ marginBottom: '0.5rem', color: '#fff' }}>
               {editingTaskId ? 'Edit Task' : 'New Task'}
             </h2>
             <input
@@ -824,10 +739,10 @@ function App(): JSX.Element {
               style={{
                 width: '100%',
                 padding: '0.5rem',
-                border: `1px solid ${colors.borderColor}`,
+                border: '1px solid #555',
                 borderRadius: '4px',
-                backgroundColor: colors.altBg,
-                color: colors.textColor
+                backgroundColor: '#333',
+                color: '#ccc'
               }}
             />
             <textarea
@@ -838,14 +753,14 @@ function App(): JSX.Element {
                 width: '100%',
                 height: '100px',
                 padding: '0.5rem',
-                border: `1px solid ${colors.borderColor}`,
+                border: '1px solid #555',
                 borderRadius: '4px',
                 resize: 'vertical',
-                backgroundColor: colors.altBg,
-                color: colors.textColor
+                backgroundColor: '#333',
+                color: '#ccc'
               }}
             />
-            <label style={{ color: colors.textColor }}>
+            <label style={{ color: '#ccc' }}>
               Due Date:
               <input
                 type="datetime-local"
@@ -853,11 +768,11 @@ function App(): JSX.Element {
                 onChange={(e) => setTaskDueDate(e.target.value)}
                 style={{
                   marginLeft: '0.5rem',
-                  border: `1px solid ${colors.borderColor}`,
+                  border: '1px solid #555',
                   borderRadius: '4px',
                   padding: '0.3rem',
-                  backgroundColor: colors.altBg,
-                  color: colors.textColor
+                  backgroundColor: '#333',
+                  color: '#ccc'
                 }}
               />
             </label>
@@ -865,12 +780,12 @@ function App(): JSX.Element {
               <button
                 onClick={closeTaskModal}
                 style={{
-                  backgroundColor: colors.buttonBg,
+                  backgroundColor: '#444',
                   border: 'none',
                   borderRadius: '4px',
                   padding: '0.5rem 1rem',
                   cursor: 'pointer',
-                  color: colors.buttonText
+                  color: '#ccc'
                 }}
               >
                 Close
@@ -878,7 +793,7 @@ function App(): JSX.Element {
               <button
                 onClick={handleCreateOrUpdateTask}
                 style={{
-                  backgroundColor: colors.accent,
+                  backgroundColor: '#483699',
                   color: '#fff',
                   border: 'none',
                   borderRadius: '4px',
@@ -913,12 +828,12 @@ function App(): JSX.Element {
           <div
             style={{
               position: 'relative',
-              backgroundColor: darkMode ? '#2b2b2b' : '#f7f7f7',
+              backgroundColor: '#2b2b2b',
               padding: '1rem',
               borderRadius: '8px',
               boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
               width: '400px',
-              color: colors.textColor
+              color: '#ccc'
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -933,21 +848,21 @@ function App(): JSX.Element {
                 width: '100%',
                 padding: '0.5rem',
                 borderRadius: '4px',
-                border: `1px solid ${colors.borderColor}`,
+                border: '1px solid #555',
                 fontSize: '1rem',
-                backgroundColor: colors.altBg,
-                color: colors.textColor
+                backgroundColor: '#333',
+                color: '#ccc'
               }}
             />
             {searchResults.length > 0 && (
               <div
                 style={{
                   marginTop: '0.5rem',
-                  border: `1px solid ${colors.borderColor}`,
+                  border: '1px solid #444',
                   borderRadius: '4px',
                   maxHeight: '200px',
                   overflowY: 'auto',
-                  backgroundColor: darkMode ? '#2b2b2b' : '#fff'
+                  backgroundColor: '#2b2b2b'
                 }}
               >
                 {searchResults.map((res, i) => {
@@ -958,8 +873,8 @@ function App(): JSX.Element {
                       onClick={() => goToSearchResult(res)}
                       style={{
                         padding: '0.5rem',
-                        backgroundColor: isSelected ? colors.accent : 'transparent',
-                        color: isSelected ? '#fff' : colors.textColor,
+                        backgroundColor: isSelected ? '#483699' : 'transparent',
+                        color: isSelected ? '#fff' : '#ccc',
                         cursor: 'pointer'
                       }}
                     >
@@ -993,7 +908,7 @@ function App(): JSX.Element {
         >
           <div
             style={{
-              backgroundColor: darkMode ? '#2b2b2b' : '#f7f7f7',
+              backgroundColor: '#2b2b2b',
               borderRadius: '8px',
               padding: '1rem',
               minWidth: '600px',
@@ -1001,13 +916,11 @@ function App(): JSX.Element {
               display: 'flex',
               flexDirection: 'column',
               gap: '1rem',
-              color: colors.textColor
+              color: '#ccc'
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 style={{ marginBottom: '0.5rem', color: darkMode ? '#fff' : '#000' }}>
-              Prompt ChatGPT
-            </h2>
+            <h2 style={{ marginBottom: '0.5rem', color: '#fff' }}>Prompt ChatGPT</h2>
             <textarea
               value={chatGptPrompt}
               onChange={(e) => setChatGptPrompt(e.target.value)}
@@ -1017,22 +930,22 @@ function App(): JSX.Element {
                 height: '200px',
                 padding: '0.5rem',
                 resize: 'vertical',
-                border: `1px solid ${colors.borderColor}`,
+                border: '1px solid #555',
                 borderRadius: '4px',
-                backgroundColor: colors.altBg,
-                color: colors.textColor
+                backgroundColor: '#333',
+                color: '#ccc'
               }}
             />
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
               <button
                 onClick={closeChatGptPanel}
                 style={{
-                  backgroundColor: colors.buttonBg,
+                  backgroundColor: '#444',
                   border: 'none',
                   borderRadius: '4px',
                   padding: '0.5rem 1rem',
                   cursor: 'pointer',
-                  color: colors.buttonText
+                  color: '#ccc'
                 }}
               >
                 Close
@@ -1040,7 +953,7 @@ function App(): JSX.Element {
               <button
                 onClick={handleSendToChatGpt}
                 style={{
-                  backgroundColor: colors.accent,
+                  backgroundColor: '#483699',
                   color: '#fff',
                   border: 'none',
                   borderRadius: '4px',
